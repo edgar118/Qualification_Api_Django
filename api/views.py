@@ -1,16 +1,18 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets,  permissions
 from .serializer import (
     SubjectSerializer, StudentSerializer, 
     ProfessorSerializer, EnrollmentSerializer, 
     ProfessorSerializerForWrite, StudenPerProfesorSerializer, 
-    StudentGradeSerializer, GradeSerializer, StudentRegistrationSerializer)
+    StudentGradeSerializer, GradeSerializer, StudentRegistrationSerializer, UserRegisterSerializer)
 from .models import Subject, Student, Professor ,Enrollment
+from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework import generics
 
 # # Create your views here.
 
@@ -206,3 +208,8 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
         
         serializer = EnrollmentSerializer(enrollment)
         return Response({'status': 'Grade updated successfully.', 'data': serializer.data}, status=200)
+    
+class UserRegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserRegisterSerializer
+    permission_classes = [permissions.AllowAny]

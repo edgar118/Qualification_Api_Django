@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Subject, Student, Professor ,Enrollment
+from django.contrib.auth.models import User
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -127,3 +128,19 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         model = Enrollment
         fields = ['id', 'student', 'subject', 'enrollment_date', 'grade', 'is_passed']
         read_only_fields = ['is_passed']
+
+class UserRegisterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['username', 'password']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def create(self, validated_data):
+        user = User(
+            username=validated_data['username']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user

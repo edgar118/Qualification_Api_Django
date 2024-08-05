@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .views import UserRegisterView
 
 
 router = routers.DefaultRouter()
@@ -15,6 +16,7 @@ router.register(r'subject', views.SubjectViewSet, basename='Subject')
 router.register(r'student', views.StudentViewSet, basename='Student')
 router.register(r'professor', views.ProfessorViewSet, basename='Professor')
 router.register(r'enrollment', views.EnrollmentViewSet, basename='Enrollment')
+# router.register(r'register', views.UserRegisterView, basename='User')
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -33,6 +35,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('register/', UserRegisterView.as_view(), name='user-register'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
