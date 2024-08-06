@@ -41,27 +41,17 @@ class StudentSerializer(serializers.ModelSerializer):
     approved_subjects = serializers.SerializerMethodField()
     average_grade = serializers.SerializerMethodField()
     failed_subjects = serializers.SerializerMethodField()
+    enrollments = serializers.SerializerMethodField()
 
     class Meta:
         model = Student
         fields = ['id', 'first_name', 'last_name', 'email', 'date_of_birth', 'enrollment_date',
-                'approved_subjects', 'average_grade', 'failed_subjects']
+                'approved_subjects', 'average_grade', 'failed_subjects', 'enrollments']
 
-    def create(self, validated_data):
-        subject_ids = validated_data.pop('subject_ids', [])
-        student = Student.objects.create(**validated_data)
-        
-        subjects = Subject.objects.filter(pk__in=subject_ids)
-        for subject in subjects:
-            prerequisites = subject.prerequisites.all()
-            if not prerequisites.exists() or Enrollment.objects.filter(student=student, subject__in=prerequisites).exists():
-                Enrollment.objects.create(student=student, subject=subject)
-            else:
-                raise serializers.ValidationError({
-                    'subject_ids': [f'El estudiante no cumple con los requisitos previos para {subject.name}.']
-                })
-        
-        return student
+    def get_enrollments(self, obj):
+        enrollments = Enrollment.objects.filter(student=obj)
+        return EnrollmentSerializer(enrollments, many=True).data
+    
     
     def get_approved_subjects(self, obj):
         subjects = obj.approved_subjects()

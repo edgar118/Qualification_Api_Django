@@ -24,6 +24,11 @@ class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentRegistrationSerializer
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StudentRegistrationSerializer
+        return StudentSerializer
+
     @action(detail=False, methods=['post'])
     def register(self, request):
         serializer = self.get_serializer(data=request.data)
