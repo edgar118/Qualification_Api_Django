@@ -25,7 +25,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     serializer_class = StudentRegistrationSerializer
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == 'create' or 'update':
             return StudentRegistrationSerializer
         return StudentSerializer
     

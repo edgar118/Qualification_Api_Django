@@ -20,7 +20,7 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = ['first_name','last_name', 'email','date_of_birth','enrollment_date', 'subject_ids']
+        fields = ['id', 'first_name','last_name', 'email','date_of_birth','enrollment_date', 'subject_ids']
 
     def create(self, validated_data):
         subject_ids = validated_data.pop('subject_ids', [])
@@ -29,13 +29,25 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
         subjects = Subject.objects.filter(pk__in=subject_ids)
         for subject in subjects:
             prerequisites = subject.prerequisites.all()
-            if prerequisites.exists():
-                approved_subjects = student.approved_subjects()
-                if not all(prerequisite in approved_subjects for prerequisite in prerequisites):
-                    raise serializers.ValidationError({
-                        'subject_ids': [f'El estudiante no cumple con los requisitos previos para {subject.name}.']
-                    })
+            for prereq in prerequisites:
+                if not Enrollment.objects.filter(student=student, subject=prereq, grade__gte=3.0).exists():
+                    raise serializers.ValidationError(f'El estudiante no cumple con los requisitos previos para {subject.name}.')
             Enrollment.objects.create(student=student, subject=subject)
+
+    def update(self, instance, validated_data):
+        subject_ids = validated_data.pop('subject_ids', [])
+        instance = super().update(instance, validated_data)
+        
+        subjects = Subject.objects.filter(pk__in=subject_ids)
+        for subject in subjects:
+            if not Enrollment.objects.filter(student=instance, subject=subject).exists():
+                prerequisites = subject.prerequisites.all()
+                for prereq in prerequisites:
+                    if not Enrollment.objects.filter(student=instance, subject=prereq, grade__gte=3.0).exists():
+                        raise serializers.ValidationError(f'El estudiante no cumple con los requisitos previos para {subject.name}.')
+                Enrollment.objects.create(student=instance, subject=subject)
+        
+        return instance
 
         return student
     
