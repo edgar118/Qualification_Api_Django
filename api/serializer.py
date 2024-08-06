@@ -3,9 +3,10 @@ from .models import Subject, Student, Professor ,Enrollment
 from django.contrib.auth.models import User
 
 class SubjectSerializer(serializers.ModelSerializer):
+    prerequisites = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), many=True, required=False, allow_null=True)
     class Meta:
         model = Subject
-        fields = ['id', 'name', 'description']
+        fields = ['id', 'name', 'description', 'prerequisites']
         extra_kwargs = {
             'first_name': {'help_text': 'First name of the student'},
             'last_name': {'help_text': 'Last name of the student'},
@@ -24,17 +25,18 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         subject_ids = validated_data.pop('subject_ids', [])
         student = Student.objects.create(**validated_data)
-        
+
         subjects = Subject.objects.filter(pk__in=subject_ids)
         for subject in subjects:
             prerequisites = subject.prerequisites.all()
-            if not prerequisites.exists() or Enrollment.objects.filter(student=student, subject__in=prerequisites).exists():
-                Enrollment.objects.create(student=student, subject=subject)
-            else:
-                raise serializers.ValidationError({
-                    'subject_ids': [f'El estudiante no cumple con los requisitos previos para {subject.name}.']
-                })
-        
+            if prerequisites.exists():
+                approved_subjects = student.approved_subjects()
+                if not all(prerequisite in approved_subjects for prerequisite in prerequisites):
+                    raise serializers.ValidationError({
+                        'subject_ids': [f'El estudiante no cumple con los requisitos previos para {subject.name}.']
+                    })
+            Enrollment.objects.create(student=student, subject=subject)
+
         return student
     
 class StudentSerializer(serializers.ModelSerializer):

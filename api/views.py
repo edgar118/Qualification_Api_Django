@@ -28,14 +28,6 @@ class StudentViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return StudentRegistrationSerializer
         return StudentSerializer
-
-    @action(detail=False, methods=['post'])
-    def register(self, request):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=True, methods=['get'])
     def enrolled_subjects(self, request, pk=None):
